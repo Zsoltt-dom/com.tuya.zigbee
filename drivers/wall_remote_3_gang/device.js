@@ -2,12 +2,12 @@
 
 const { ZigBeeDevice } = require('homey-zigbeedriver');
 // const { CLUSTER } = require('zigbee-clusters');
-
+let debounce=0;
 class wall_remote_3_gang extends ZigBeeDevice {
 
     async onNodeInit({zclNode}) {
 
-        var debounce = 0;
+        //var debounce = 0;
         this.printNode();
 
         const node = await this.homey.zigbee.getNode(this);
@@ -16,10 +16,15 @@ class wall_remote_3_gang extends ZigBeeDevice {
             this.log("endpointId:", endpointId,", clusterId:", clusterId,", frame:", frame, ", meta:", meta);
             this.log("Frame JSON data:", frame.toJSON());
             frame = frame.toJSON();
-            debounce = debounce+1;
+            debounce +=1;
+            setTimeout(debouncetmr, 1000);
+            this.log("Debounce: ", debounce);
             if (debounce===1){
               this.buttonCommandParser(endpointId, frame);
             } else {
+              debounce=0;
+            }
+            function debouncetmr() {
               debounce=0;
             }
           }
