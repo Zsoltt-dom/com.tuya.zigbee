@@ -22,10 +22,16 @@ class smart_remote_1b extends ZigBeeDevice {
         );
         this.log("Frame JSON data:", frame.toJSON());
         debounce = debounce + 1;
+        frame = frame.toJSON();
+        setTimeout(debouncetmr, 700);
+        this.log("Debounce: ", debounce);
         if (debounce === 1) {
           this.buttonCommandParser(frame);
         } else {
           debounce = 0;
+        }
+        function debouncetmr() {
+          debounce=0;
         }
       }
     };
@@ -38,7 +44,7 @@ class smart_remote_1b extends ZigBeeDevice {
   }
 
   buttonCommandParser(frame) {
-    var action = frame[3] === 0 ? "oneClick" : "twoClicks";
+    var action = frame.data[2] === 1 ? "oneClick" : "twoClicks";
     return this._buttonPressedTriggerDevice
       .trigger(this, {}, { action: `${action}` })
       .then(() => this.log(`Triggered 1 button Smart Remote, action=${action}`))
