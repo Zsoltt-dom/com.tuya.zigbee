@@ -331,6 +331,12 @@
                 "label": {
                   "en": "2 Clicks"
                 }
+              },
+              {
+                "id": "trippleClicks",
+                "label": {
+                  "en": "3 Clicks"
+                }
               }
             ]
           }
