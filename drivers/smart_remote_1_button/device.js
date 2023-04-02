@@ -4,11 +4,13 @@ const { ZigBeeDevice } = require("homey-zigbeedriver");
 
 class smart_remote_1b extends ZigBeeDevice {
   async onNodeInit({ zclNode }) {
-    var debounce = 0;
     this.printNode();
 
     const node = await this.homey.zigbee.getNode(this);
     node.handleFrame = (endpointId, clusterId, frame, meta) => {
+      this.log({
+        endpointId, clusterId, frame, meta
+      })
       if (clusterId === 6) {
         this.log(
           "endpointId:",
@@ -20,19 +22,9 @@ class smart_remote_1b extends ZigBeeDevice {
           ", meta:",
           meta
         );
-        this.log("Frame JSON data:", frame.toJSON());
-        debounce = debounce + 1;
-        frame = frame.toJSON();
-        setTimeout(debouncetmr, 700);
-        this.log("Debounce: ", debounce);
-        if (debounce === 1) {
-          this.buttonCommandParser(frame);
-        } else {
-          debounce = 0;
-        }
-        function debouncetmr() {
-          debounce=0;
-        }
+        frame = frame.toJSON()
+        this.log("Frame JSON data:", frame);
+        this.debouncemtr( this.buttonCommandParser(frame));
       }
     };
 
@@ -42,9 +34,21 @@ class smart_remote_1b extends ZigBeeDevice {
         return null, args.action === state.action;
       });
   }
-
+  debouncemtr(func, timeout = 700){
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => { func.apply(this, args); }, timeout);
+    };
+  }
   buttonCommandParser(frame) {
-    var action = frame.data[2] === 1 ? "oneClick" : "twoClicks";
+    let action = 'oneClick'
+    if ( frame.data.length === 3 ){
+      action = frame.data[3] === 4 ? "trippleClicks" : frame.data[2] === 1 ? "oneClick" : "twoClicks";
+    }else{
+      action = frame.data[3] === 4 ? "trippleClicks" : frame.data[3] === 0 ? "oneClick" : "twoClicks";
+    }
+    this.log({action})
     return this._buttonPressedTriggerDevice
       .trigger(this, {}, { action: `${action}` })
       .then(() => this.log(`Triggered 1 button Smart Remote, action=${action}`))
